@@ -12,7 +12,10 @@ int GetArgs(int argc, char ** argv, char ** in, char ** out) {
     return OK;
 }
 
-int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rate) {
+int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rate, int * max_current_count) {
+    if (mass == NULL) {
+        return INCORRECT_ARGUMENTS;
+    }
     FILE * input;
     if ((input = fopen(in, "r")) == NULL) {
         return OPEN_PROBLEM;
@@ -41,8 +44,10 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
         }
         if ((current == ' ' || current == '\n' || current == '\t') && flag != RATING) {
             if (flag == ID) {
+                str_id[current_count] = 0;
                 (*mass)[*mass_count].id = atoi(str_id);
             }
+            current_tmp[current_count] = 0;
             flag++;
             current_count = 0;
             current_size = 0;
@@ -57,6 +62,8 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                 mass_size = 2 * (*mass_count) + 1;
                 tmp = (Student *) realloc(*mass, mass_size * sizeof(Student));
                 if (tmp == NULL) {
+                    free(str_id);
+                    fclose(input);
                     return MEM_PROBLEM;
                 }
                 *mass = tmp;
@@ -81,8 +88,10 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                     current_count++;
                     if (current_count >= current_size) {
                         current_size = 2 * current_count + 1;
-                        current_tmp = (char *) realloc(str_id, current_size);
+                        current_tmp = (char *) realloc(str_id, current_size * 10000000000);
                         if (current_tmp == NULL) {
+                            free(str_id);
+                            fclose(input);
                             return MEM_PROBLEM;
                         }
                         str_id = current_tmp;
@@ -90,6 +99,7 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                     str_id[current_count - 1] = current;
                 }
                 else {
+                    free(str_id);
                     return INCORRECT_ARGUMENTS;
                 }
                 break;
@@ -100,6 +110,8 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                         current_size = 2 * current_count + 1;
                         current_tmp = (char *) realloc((*mass)[*mass_count].name, current_size);
                         if (current_tmp == NULL) {
+                            free(str_id);
+                            fclose(input);
                             return MEM_PROBLEM;
                         }
                         (*mass)[*mass_count].name = current_tmp;
@@ -107,6 +119,7 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                     (*mass)[*mass_count].name[current_count - 1] = current;
                 }
                 else {
+                    free(str_id);
                     return INCORRECT_ARGUMENTS;
                 }
                 break;
@@ -117,6 +130,8 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                         current_size = 2 * current_count + 1;
                         current_tmp = (char *) realloc((*mass)[*mass_count].surname, current_size);
                         if (current_tmp == NULL) {
+                            free(str_id);
+                            fclose(input);
                             return MEM_PROBLEM;
                         }
                         (*mass)[*mass_count].surname = current_tmp;
@@ -133,6 +148,7 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                     current_size = 2 * current_count + 1;
                     current_tmp = (char *) realloc((*mass)[*mass_count].group, current_size);
                     if (current_tmp == NULL) {
+                        free(str_id);
                         return MEM_PROBLEM;
                     }
                     (*mass)[*mass_count].group = current_tmp;
@@ -142,6 +158,8 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
             case RATING:
                 current_count++;
                 if (current_count > 5) {
+                    free(str_id);
+                    fclose(input);
                     return INCORRECT_ARGUMENTS;
                 }
                 if (isdigit(current)) {
@@ -149,6 +167,7 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                         current_size = 2 * current_count + 1;
                         current_tmp = (char *) realloc((*mass)[*mass_count].rating, current_size);
                         if (current_tmp == NULL) {
+                            free(str_id);
                             return MEM_PROBLEM;
                         }
                         (*mass)[*mass_count].rating = current_tmp;
@@ -157,37 +176,55 @@ int MassFulling(Student ** mass, char * in, int * mass_count, float * medium_rat
                     (*mass)[*mass_count].rating[current_count - 1] = current;
                 }
                 else {
+                    free(str_id);
+                    fclose(input);
                     return INCORRECT_ARGUMENTS;
                 }
                 break;
             
         }
+        *max_current_count = max(current_count, *max_current_count);
     }
     *medium_rate /= *mass_count;
     if (flag == 4) {
         if (current_count > 5) {
+            free(str_id);
+            fclose(input);
             return INCORRECT_ARGUMENTS;
         }
         mass_count++;
         flag = 0;
     }
     if (flag != 0) {
+        free(str_id);
+        fclose(input);
         return INCORRECT_ARGUMENTS;
     }
+    free(str_id);
     fclose(input);
     return OK;
     
     
 }
 
+int max(int a, int b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
+
 int FinderID(Student * mass, int mass_count, unsigned int id, char * out) {
+    if (mass == NULL || mass_count < 0) {
+        return INCORRECT_ARGUMENTS;
+    }
     FILE * output = fopen(out, "w");
     if (output == NULL) {
         return OPEN_PROBLEM;
     }
     for (int i = 0; i < mass_count; i++) {
         if (mass[i].id == id) {
-            fprintf(output, "%s %s %s %f\n-----------\n", mass[i].name, 
+            fprintf(output, "%s %s %s %f\n", mass[i].name, 
             mass[i].surname, mass[i].group, mass[i].medium);
             fclose(output);
             return OK;
@@ -197,6 +234,9 @@ int FinderID(Student * mass, int mass_count, unsigned int id, char * out) {
 }
 
 int Finder(Student * mass, int mass_count, char * find_what, char * out, int flag) {
+    if (mass == NULL || mass_count < 0) {
+        return INCORRECT_ARGUMENTS;
+    }
     FILE * output = fopen(out, "w");
     if (output == NULL) {
         return OPEN_PROBLEM;
@@ -205,21 +245,21 @@ int Finder(Student * mass, int mass_count, char * find_what, char * out, int fla
         switch(flag) {
             case NAME:
                 if (strcmp(mass[i].name, find_what) == 0) {
-                    fprintf(output, "%s %s %s %f\n-----------\n", mass[i].name, 
+                    fprintf(output, "%s %s %s %f\n", mass[i].name, 
                     mass[i].surname, mass[i].group, mass[i].medium);
                     fclose(output);
                     return OK;
                 }
             case SURNAME:
                 if (strcmp(mass[i].surname, find_what) == 0) {
-                    fprintf(output, "%s %s %s %f\n-----------\n", mass[i].name, 
+                    fprintf(output, "%s %s %s %f\n", mass[i].name, 
                     mass[i].surname, mass[i].group, mass[i].medium);
                     fclose(output);
                     return OK;
                 }
             case GROUP:
                 if (strcmp(mass[i].name, find_what) == 0) {
-                    fprintf(output, "%s %s %s %f\n-----------\n", mass[i].name, 
+                    fprintf(output, "%s %s %s %f\n", mass[i].name, 
                     mass[i].surname, mass[i].group, mass[i].medium);
                     fclose(output);
                     return OK;
@@ -230,6 +270,9 @@ int Finder(Student * mass, int mass_count, char * find_what, char * out, int fla
 }
 
 int Best(Student * mass, int mass_count, float medium_rate, float eps, char * out) {
+    if (mass == NULL || mass_count < 0 || medium_rate < 0 || eps < 0) {
+        return INCORRECT_ARGUMENTS;
+    }
     FILE * output = fopen(out, "w");
     if (output == NULL) {
         return OPEN_PROBLEM;
@@ -239,47 +282,83 @@ int Best(Student * mass, int mass_count, float medium_rate, float eps, char * ou
             fprintf(output, "%s %s %f\n", mass[i].name, mass[i].surname, mass[i].medium);
         }
     }
-    fprintf(output, "-----------\n");
     fclose(output);
     return OK;
 }
 
-int CmpId(Student first, Student second) {
-    if (first.id > second.id) {
+int CmpId(const void * a, const void * b) {
+    Student * first = (Student *) a;
+    Student * second = (Student *) b;
+    if (first->id > second->id) {
         return 1;
     }
-    else if (first.id == second.id) {
+    else if (first->id == second->id) {
         return 0;
     }
     return -1;
 }
 
-int CmpName(Student first, Student second) {
-    return strcmp(first.name, second.name);
+int CmpName(const void * a, const void * b) {
+    Student * first = (Student *) a;
+    Student * second = (Student *) b;
+    return strcmp(first->name, second->name);
 }
-int CmpSurname(Student first, Student second) {
-    return strcmp(first.surname, second.surname);
+int CmpSurname(const void * a, const void * b) {
+    Student * first = (Student *) a;
+    Student * second = (Student *) b;
+    return strcmp(first->surname, second->surname);
 }
-int CmpGroup(Student first, Student second) {
-    return strcmp(first.group, second.group);
+int CmpGroup(const void * a, const void * b) {
+    Student * first = (Student *) a;
+    Student * second = (Student *) b;
+    return strcmp(first->group, second->group);
+}
+
+int SortToFile(Student * mass, int mass_count, situations situation, char * out) {
+    switch (situation) {
+        case ID:
+            qsort(mass, mass_count, sizeof(Student), CmpId);
+            break;
+        case NAME:
+            qsort(mass, mass_count, sizeof(Student), CmpName);
+            break;
+        case SURNAME:
+            qsort(mass, mass_count, sizeof(Student), CmpSurname);
+            break;
+        case GROUP:
+            qsort(mass, mass_count, sizeof(Student), CmpGroup);
+            break;
+    }
+    FILE * output;
+    if ((output = fopen(out, "w")) == NULL) {
+        return OPEN_PROBLEM;
+    }
+    for (int i = 0; i < mass_count; i++) {
+        fprintf(output ,"%d %s %s %s %s\n", (mass)[i].id, (mass)[i].name, (mass)[i].surname, (mass)[i].group, (mass)[i].rating);
+    }
+    fclose(output);
+    return OK;
+
 }
 
 
 int main(int argc, char ** argv) {
+    free(NULL);
     char * in;
     char * out;
     Student * mass;
     int mass_count;
     float medium_rate;
+    int max_current_count;
     if (GetArgs(argc, argv, &in, &out)) {
         printf("incorrect arguments");
         return INCORRECT_ARGUMENTS;
     }
-    statuses status = MassFulling(&mass, "in.txt", &mass_count, &medium_rate);
+    statuses status = MassFulling(&mass, "in.txt", &mass_count, &medium_rate, &max_current_count);
     switch(status) {
         case MEM_PROBLEM:
             printf("memory trouble");
-            return MEM_PROBLEM;
+            break;
         case INCORRECT_ARGUMENTS:
             printf("incorrect arguemtns");
             break;
@@ -287,11 +366,12 @@ int main(int argc, char ** argv) {
             printf("open problem");
             break;
         case OK:
-            printf("Доступные команды: FindId, FindName, FindSurname, FindGroup, Best, Quit\n");
-            char command[4];
+            printf("Доступные команды: FindId, FindName, FindSurname, FindGroup, SortId, "); 
+            printf("SortName, SortSurname, SortGroup, Best, Quit\n");
+            char command[15];
             unsigned int id;
             int ans_status;
-            char input[15];
+            char input[max_current_count];
             while (1) {
                 printf("Введите команду:\n");
                 scanf("%s", command);
@@ -361,6 +441,42 @@ int main(int argc, char ** argv) {
                     else if (ans_status == INCORRECT_ARGUMENTS) {
                         printf("incorrect input\n");
                     }
+                }
+                else if (strcmp(command, "SortId") == 0) {
+                    ans_status = SortToFile(mass, mass_count, ID, out);
+                    if (ans_status == OPEN_PROBLEM) {
+                        printf("open problem");
+                        break;
+                    }
+
+
+                }
+                else if (strcmp(command, "SortName") == 0) {
+                    ans_status = SortToFile(mass, mass_count, NAME, out);
+                    if (ans_status == OPEN_PROBLEM) {
+                        printf("open problem");
+                        break;
+                    }
+                    
+
+                }
+                else if (strcmp(command, "SortSurname") == 0) {
+                    ans_status = SortToFile(mass, mass_count, SURNAME, out);
+                    if (ans_status == OPEN_PROBLEM) {
+                        printf("open problem");
+                        break;
+                    }
+                    
+
+                }
+                else if (strcmp(command, "SortGroup") == 0) {
+                    ans_status = SortToFile(mass, mass_count, GROUP, out);
+                    if (ans_status == OPEN_PROBLEM) {
+                        printf("open problem");
+                        break;
+                    }
+                    
+
                 }
                 else {
                     printf("incorrect command\n");

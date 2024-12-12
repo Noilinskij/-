@@ -4,7 +4,7 @@
 int main() {
     printf("%f\n", Task2(3, 2, 1.0, 1.0, 1.0));
     printf("\n");
-    int status = Task1(4, (point){0.0, 0.0}, (point){1.0, 0.0}, (point){1.0, 1.0}, (point){0.0, 1.0});
+    int status = Task1(4, (point){0.0, 0.0}, (point){0.0, 0.0}, (point){0.0, 0.0}, (point){0.0, 0.0});
     if (status == OK) {
         printf("YES\n");
     }
@@ -19,7 +19,7 @@ int main() {
         printf("NO\n");
     }
     printf("\n");
-    finaly_ans ans = Task3(16, 3, "9", "10", "6");
+    finaly_ans ans = Task3(10, 3, "36", "10", "6");
     for (int i = 0; i < ans.len; i++) {
         switch(ans.mass[i]) {
             case OVERFLOW:

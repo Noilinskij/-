@@ -25,6 +25,9 @@ double func_res(double a, double * coefficents, int degree) {
 int Task(double eps, double a, double ** ans, int degree, ...) {
     va_list args;
     va_start(args, degree);
+    if (ans == NULL) {
+        return MEM_TROUBLE;
+    }
     *ans = (double *) malloc((degree + 1) * sizeof(double));
     if (*ans == NULL) {
         return MEM_TROUBLE;
@@ -39,7 +42,7 @@ int Task(double eps, double a, double ** ans, int degree, ...) {
     }
     va_end(args);
     double fact = 1.0;
-    (*ans)[0] = func_res(a, current, degree);
+    **ans = func_res(a, current, degree);
     double current_degree = degree - 1;
     for (int i = 1; i <= degree; i++) {
         // вычисление производной

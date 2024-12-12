@@ -38,6 +38,7 @@ int Task1(int count, ...) {
     double cross;
     int sign;
     int main_sign = 0;
+    int flag_straight = 0;
     for (int i = 0; i < count; i++) {
         // вторая точка тройки
         int j = (i + 1) % count;
@@ -53,6 +54,7 @@ int Task1(int count, ...) {
             sign = -1;
         }
         else {
+            flag_straight++;
             sign = 0;
         }
 
@@ -71,7 +73,12 @@ int Task1(int count, ...) {
         }
 
     }
-    return OK;
+    if (flag_straight != count) {
+        return OK;
+    }
+    else {
+        return NO;
+    }
 
 }
 
@@ -153,6 +160,9 @@ int Caprecar(char * current, int base) {
         return NO;
     }
     char * right = (char *) malloc (len + 1);
+    if (right == NULL) {
+        return MEM_TROUBLE;
+    }
     char left[len + 1];
     for (int i = 0; i < len; i++) {
         left[i] = square[i];
